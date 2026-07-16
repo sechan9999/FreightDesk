@@ -7,10 +7,10 @@ plans come out — with a human review queue for anything the agent isn't sure a
 Built for **[OpenAI Build Week](https://openai.devpost.com/)** · Track: **Work & Productivity**
 · Built with **Codex + GPT-5.6**
 
-> ⚠️ **Repo status: pre-build scaffold.** This repo currently contains the PRD,
-> seed data, and submission docs only. All application code will be built in a
-> Codex session (per hackathon rules, the core functionality is attested by the
-> Codex `/feedback` session ID in the submission).
+> **Repo status:** working Streamlit demo + tested engine (`freightdesk/`), running
+> on a **deterministic stub engine** standing in for GPT-5.6 (zero tokens, fully
+> reproducible). For the hackathon submission, the core is rebuilt/extended in a
+> Codex session per the rules — this implementation is the reference and demo fallback.
 
 ## The problem
 
@@ -36,13 +36,23 @@ a bounded agent loop (no runaway token bills), and confidence-based human escala
 
 ## Quickstart
 
-_TBD after the Codex build — will include:_
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+Click **"Replay the Savannah storm (32 messages)"** — then open the 🔴 pharma
+exception at the top of the inbox, inspect the agent trace, edit the drafted
+customer email, and approve it. Try **"Replay again"** to watch idempotency drop
+all 32 as duplicates.
+
+Optional live-LLM triage: `FREIGHTDESK_USE_OPENAI=1` + `OPENAI_API_KEY`
+(+ `pip install openai`); the stub remains the fallback on any API failure.
+
+Run the tests:
 
 ```bash
-# pip install -r requirements.txt
-# cp .env.example .env   # add OPENAI_API_KEY
-# python -m freightdesk.seed  data/seed_messages.jsonl
-# uvicorn freightdesk.api:app & npm run dev
+pytest        # 10 tests: triage, tiering, idempotency, bounded agent, full seed replay
 ```
 
 ## Sample data
