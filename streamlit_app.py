@@ -108,16 +108,19 @@ if st.session_state.get("replayed"):
         )
 
 # ---- panels --------------------------------------------------------------------
+# Review items live ONLY in the review tab; rendering a record in two tabs would
+# duplicate its widget keys (StreamlitDuplicateElementKey).
 open_recs = desk.sorted_open()
 review_recs = desk.by_status("needs_human_review")
+inbox_recs = [r for r in open_recs if r.status != "needs_human_review"]
 tab_inbox, tab_review, tab_log = st.tabs([
-    f"Inbox ({len(open_recs)})",
+    f"Inbox ({len(inbox_recs)})",
     f"Human review ({len(review_recs)})",
     "Activity log",
 ])
 
 
-def render_exception(rec, in_review_tab=False):
+def render_exception(rec, ns):
     t, a, d = rec.triage, rec.assessment, rec.draft
     badge = TIER_BADGE[rec.tier]
     title = (f"{badge} {t.shipment_ref or 'NO-REF'} · {t.exception_type} · "
@@ -135,9 +138,9 @@ def render_exception(rec, in_review_tab=False):
                     f"**At risk:** ${a.affected_value:,.0f}"
                 )
             if d:
-                subject = st.text_input("Email subject", d.email_subject, key=f"subj-{rec.id}")
+                subject = st.text_input("Email subject", d.email_subject, key=f"{ns}-subj-{rec.id}")
                 body = st.text_area("Customer email draft (editable)", d.email_body,
-                                    height=200, key=f"body-{rec.id}")
+                                    height=200, key=f"{ns}-body-{rec.id}")
                 st.markdown("**Internal action plan**")
                 st.markdown(d.action_plan)
         with right:
@@ -149,29 +152,29 @@ def render_exception(rec, in_review_tab=False):
 
         if rec.status in ("ready_for_approval", "needs_human_review"):
             col_a, col_b, col_c = st.columns(3)
-            if col_a.button("✅ Approve & send", key=f"approve-{rec.id}", use_container_width=True):
+            if col_a.button("✅ Approve & send", key=f"{ns}-approve-{rec.id}", use_container_width=True):
                 if d:
-                    d.email_subject = st.session_state.get(f"subj-{rec.id}", d.email_subject)
-                    d.email_body = st.session_state.get(f"body-{rec.id}", d.email_body)
+                    d.email_subject = st.session_state.get(f"{ns}-subj-{rec.id}", d.email_subject)
+                    d.email_body = st.session_state.get(f"{ns}-body-{rec.id}", d.email_body)
                 desk.set_status(rec.id, "sent")
                 desk.log("info", "customer_email_sent", id=rec.id, ref=t.shipment_ref or "-")
                 st.rerun()
             if rec.status == "ready_for_approval":
-                if col_b.button("👀 Send to review", key=f"review-{rec.id}", use_container_width=True):
+                if col_b.button("👀 Send to review", key=f"{ns}-review-{rec.id}", use_container_width=True):
                     desk.set_status(rec.id, "needs_human_review")
                     desk.log("warning", "sent_to_review", id=rec.id, by="operator")
                     st.rerun()
-            if col_c.button("🗑 Dismiss", key=f"dismiss-{rec.id}", use_container_width=True):
+            if col_c.button("🗑 Dismiss", key=f"{ns}-dismiss-{rec.id}", use_container_width=True):
                 desk.set_status(rec.id, "dismissed")
                 desk.log("info", "dismissed", id=rec.id)
                 st.rerun()
 
 
 with tab_inbox:
-    if not open_recs:
+    if not inbox_recs:
         st.info("Inbox is clear. Replay the Savannah storm or inject a message from the sidebar.")
-    for rec in open_recs:
-        render_exception(rec)
+    for rec in inbox_recs:
+        render_exception(rec, ns="inbox")
 
 with tab_review:
     if not review_recs:
@@ -182,7 +185,7 @@ with tab_review:
             "or confidence below the threshold."
         )
         for rec in review_recs:
-            render_exception(rec, in_review_tab=True)
+            render_exception(rec, ns="review")
 
 with tab_log:
     if desk.logs:
