@@ -61,7 +61,9 @@ _TBD after the build — this section will document, with session references:_
 
 ## Docs
 
-- [PRD.md](PRD.md) — full product requirements (hand this to Codex)
+- [PRD.md](PRD.md) — product requirements: user stories, scope, demo flow
+- [SPEC.md](SPEC.md) — technical spec: components, validated schema, API contracts, agent interfaces
+- [BUILD_CHECKLIST.md](BUILD_CHECKLIST.md) — milestone-by-milestone execution checklist with verification gates
 - [docs/video-script.md](docs/video-script.md) — demo video script + shot list
 - [docs/submission-draft.md](docs/submission-draft.md) — Devpost submission text
 
