@@ -34,11 +34,11 @@ This script is designed for a 9-minute presentation with roughly one minute of r
 
 ## 1:45-3:30 | Walk the highest-risk exception end to end
 
-**Click:** In **Inbox**, click the first red expander, labeled with `TRK-40045-A` and `PORT_DELAY`.
+**Click:** In **Inbox**, click the first red expander, labeled with `TRK-40045-A` and `REEFER_TEMP`.
 
 **Say:**
 
-"The highest-risk case surfaces first: `TRK-40045-A`, a temperature-sensitive pharma shipment. FreightDesk extracted the shipment reference and issue from a raw carrier-style message, then assessed the impact."
+"The highest-risk case surfaces first: `TRK-40045-A`, a temperature-sensitive pharma shipment. Notice the desk classified it as a reefer-risk case, not just another port delay - the cold chain is what makes this the shipment that matters. FreightDesk extracted the shipment reference and issue from a raw carrier-style message, then assessed the impact."
 
 **Click:** Point to **Assessment**, then scroll slightly if needed to show **Confidence**, **Rounds**, **Window missed**, and **At risk**.
 
@@ -66,17 +66,17 @@ This script is designed for a 9-minute presentation with roughly one minute of r
 
 **Say:**
 
-"One click records the approval and sends this case to the completed state. It cannot be accidentally transitioned again after that, which protects the workflow from duplicate action."
+"One click records the approval and marks the case sent - dispatch is mocked in this demo. Once sent, the case is terminal: it cannot be accidentally transitioned again, which protects the workflow from duplicate action."
 
 ## 4:45-6:00 | Show the system behaving well when it is uncertain
 
 **Click:** Click the **Human review** tab.
 
-**Click:** Open the item with `NO-REF` or the malformed feed entry, whichever is visible first.
+**Click:** Open the `NO-REF` item - this is the malformed feed entry (the second review item is `TRK-40042-A`, a seal-number mismatch the desk could not confidently classify).
 
 **Say:**
 
-"Now for the behavior that matters most in real operations: not every message should be automated. This item lacks a usable shipment identity or is malformed. FreightDesk does not invent confidence. It routes the case here, preserves the raw input, and asks a human to decide."
+"Now for the behavior that matters most in real operations: not every message should be automated. This is the malformed feed message - no usable shipment identity at all. FreightDesk does not invent confidence. It routes the case here, preserves the raw input, and asks a human to decide."
 
 "That is a safer outcome than a convincing but incorrect customer email."
 
@@ -124,6 +124,8 @@ This script is designed for a 9-minute presentation with roughly one minute of r
 
 ## Recovery lines
 
+- Do NOT click **Inject message** twice on the same sample: the second injection is
+  suppressed as a duplicate, which would contradict the narration mid-sentence.
 - If the page refreshes: "The desk persists its demo state, so the operational picture survives a Streamlit rerun."
 - If the first red item is not expanded: "The red pharma exception is the top-priority record in the Inbox."
 - If timing is short: skip the direct malformed-message injection and move from Human review to the Activity log.
