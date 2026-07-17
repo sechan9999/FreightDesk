@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from freightdesk.config import Settings
+from freightdesk.config import Settings, settings_from_env
 from freightdesk.pipeline import process_message
 from freightdesk.store import Desk
 from freightdesk.tiering import tier
@@ -132,3 +132,35 @@ def test_seed_replay_end_to_end():
     top = desk.sorted_open()[0]
     assert top.triage.shipment_ref == "TRK-40045-A"
     assert top.tier == "red"
+
+# ---- demo resilience ------------------------------------------------------
+
+def test_desk_snapshot_round_trips(tmp_path):
+    desk = Desk()
+    record = process_message(PHARMA_MSG, "email", desk, SETTINGS)
+    desk.set_status(record.id, "sent")
+    snapshot = tmp_path / "desk.json"
+    desk.save(snapshot)
+
+    restored = Desk.load(snapshot)
+    restored_record = restored.exceptions[record.id]
+    assert restored.metrics() == desk.metrics()
+    assert restored_record.status == "sent"
+    assert restored_record.triage.shipment_ref == "TRK-40045-A"
+    assert restored_record.assessment is not None
+    assert restored_record.draft is not None
+
+
+def test_demo_mode_disables_live_openai(monkeypatch):
+    monkeypatch.setenv("FREIGHTDESK_USE_OPENAI", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    settings = settings_from_env()
+    assert settings.demo_mode is True
+    assert settings.use_openai is False
+
+
+def test_live_triage_requires_explicit_demo_opt_out(monkeypatch):
+    monkeypatch.setenv("FREIGHTDESK_DEMO_MODE", "0")
+    monkeypatch.setenv("FREIGHTDESK_USE_OPENAI", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    assert settings_from_env().use_openai is True

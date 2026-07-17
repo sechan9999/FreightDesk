@@ -1,82 +1,68 @@
-# Devpost project story
+# FreightDesk: AI exception management for freight operations
 
-> Paste into the Devpost "Project story" fields. Sections marked
-> `[AFTER BUILD: ...]` MUST be replaced with what actually happened in the
-> Codex build - judges reward specifics, and the repo is testable.
+## Elevator pitch
+
+When a port disruption floods a broker's inbox, FreightDesk turns raw carrier updates into a prioritized exception queue, customer-ready drafts, and a focused human-review list.
 
 ## Inspiration
 
-Earlier this year I published a case study on asynchronous multi-agent exception
-management for logistics ([IntelTrans](https://github.com/sechan9999/IntelTrans)) -
-an architecture where a delayed container triggers an agent that investigates and
-drafts mitigations without blocking the ingest path. It was a reference design with
-simulated data. Build Week was the push to answer the obvious next question:
-*could that architecture become a product a real freight broker would open every
-morning?* Small brokerages (2-20 people) still triage exception storms by hand -
-one weather event over the Port of Savannah means forty held containers, forty
-impact assessments, and forty customer emails nobody has time to write.
+Freight operations rarely fail because a team lacks data. They fail because a small team has too much of it at the worst possible moment. One storm can create dozens of carrier updates: terse EDI notices, broker emails, SMS alarms, and duplicate feed deliveries. Each message demands the same urgent questions: Which shipment is this? What is the customer impact? Does it need a response now?
+
+FreightDesk makes that first pass fast, visible, and reviewable.
 
 ## What it does
 
-FreightDesk is an AI exception desk. Raw carrier messages - terse EDI feeds,
-rambling emails, driver texts - go in. GPT-5.6 turns each into a structured
-exception (type, severity, shipment, location) via structured outputs. A
-tool-calling investigation agent, hard-capped at five steps, works out the blast
-radius: the new ETA, whether the delivery window breaks, the dollar value at risk.
-It then drafts the customer email and an internal action plan. High-confidence
-results wait in an inbox for one-click approval; low-confidence ones route to a
-human review queue. Duplicate feed deliveries are suppressed by idempotency keys,
-and a malformed message lands safely in review instead of crashing anything.
+FreightDesk is an exception desk for freight operations. It accepts carrier-style messages, classifies the exception, assesses operational impact, prioritizes the work, and prepares a customer communication plus an internal action plan.
+
+The operator sees three outcomes instead of an unstructured inbox:
+
+- Ready for approval: high-confidence cases with a prepared response.
+- Human review: ambiguous, malformed, or low-confidence cases that need judgment.
+- Activity log: a concise record of what the system accepted, suppressed, routed, and sent.
+
+The Savannah storm replay demonstrates the complete flow with 32 realistic messages. It includes duplicate deliveries, malformed input, and a temperature-sensitive pharma shipment whose delivery window is missed and carries a $25,000 penalty risk.
+
+## Why it matters
+
+FreightDesk does not treat reliability as invisible plumbing. The safeguards are part of the product experience:
+
+- Idempotency prevents redelivered carrier messages from becoming duplicate work.
+- A bounded five-step investigation keeps reasoning predictable.
+- Confidence-based routing keeps uncertain decisions with a person.
+- Malformed messages fail into review instead of taking down the desk.
+- Persistent demo state survives Streamlit reruns and browser refreshes, so the operational picture remains intact during a live walkthrough.
+
+The result is not automatic customer communication without oversight. It is a smaller, prioritized decision queue where operators retain the final send action.
 
 ## How we built it
 
-The build ran from a written PRD with six milestones, executed in Codex with
-GPT-5.6: FastAPI + SQLite core with structured-output triage, then the bounded
-investigation agent with function tools (shipment lookup, ETA impact, port
-conditions), then the confidence-routed mitigation composer, then the inbox UI,
-then a seed-replay harness and pytest suite. [AFTER BUILD: 1-2 sentences on your
-actual Codex workflow - e.g., one long main session vs. milestone sessions, and
-one concrete decision Codex drove, like the idempotency-key design or the trace
-storage format.] At runtime GPT-5.6 does three jobs: triage parsing, agent
-reasoning over tools, and comms drafting. The demo replays 32 realistic seed
-messages - including three exact duplicates, one garbage feed message, and a
-coherent Savannah storm cluster with a $25k-penalty pharma escalation.
+FreightDesk was built as a tested Streamlit product with a deterministic demonstration engine. The engine models the full agent workflow: structured triage, bounded investigation, impact assessment, customer-draft composition, and confidence routing. This makes the live demo repeatable, including its duplicates and failure cases.
+
+Codex accelerated the build and hardening work, including the replay harness, guardrail tests, and persistent state for a reliable live demo. The project can also enable a live OpenAI triage path only through explicit environment configuration; demo mode stays deterministic by default.
 
 ## Challenges we ran into
 
-[AFTER BUILD: replace with your real top 2-3. Candidates you'll likely hit, based
-on the prior architecture work: (1) making the "answer instantly, work in the
-background" contract testable - background tasks that run inside the response
-cycle hide the latency you're trying to prove; (2) keeping the agent loop honest -
-an agent that can't parse a tool payload will happily retry forever, so the 5-step
-cap needed a forced-finalize path, not just an exception; (3) confidence
-calibration - deciding when a draft is safe to queue for one-click send vs. must
-see a human.]
+The interesting problem was not producing a draft. It was deciding when not to trust one. Freight messages can be incomplete, duplicated, or malformed, so the workflow needed to make uncertainty operationally useful rather than hide it. That led to three design constraints: suppress repeats, cap investigation work, and expose low-confidence cases in a dedicated human-review queue.
 
-## Accomplishments that we're proud of
+We also treated demo reliability as a product requirement. A judge should be able to refresh the page, replay the scenario, and see the same decision flow without relying on a network call or a lucky model response.
 
-- Guardrails as product features, not afterthoughts: idempotent ingestion, a
-  bounded agent loop, and confidence-based escalation are all *visible in the UI* -
-  the duplicates-dropped counter and review queue are part of the demo, not buried
-  in logs.
-- A complete product experience in four days: not a chat wrapper, but an inbox a
-  judge can click through end-to-end with seeded data.
-- The demo's emotional arc is real ops: a storm floods the queue, and the pharma
-  shipment with a hard Thursday delivery window and a $25,000 OTIF penalty clause
-  surfaces to the top with a ready-to-send plan.
+## Accomplishments we're proud of
+
+- A complete operator workflow, from raw message to reviewed customer draft.
+- The $25,000-risk pharma exception reliably rises to the top of the storm queue.
+- Failure modes are visible and safe: duplicates are counted, malformed data is routed to review, and no message is silently discarded.
+- A repeatable live demo with automated coverage for replay, duplicate suppression, terminal states, persistence, and demo-mode safety.
 
 ## What we learned
 
-[AFTER BUILD: your genuine takeaways. Likely candidates: what Codex is best at
-(scaffolding from a tight PRD, test generation) vs. where you steered; that
-hostile data - redelivered feeds, malformed payloads - shapes agent architecture
-more than the happy path does; that "draft + human approve" earns more trust than
-auto-send.]
+For operational AI, trust is earned at the boundaries. The useful product is not a system that always acts; it is a system that makes the routine work easy and makes uncertainty unmistakable.
 
-## What's next for FreightDesk
+## What's next
 
-Real carrier integrations (EDI 214/315, email parsing webhooks), actual email
-dispatch behind the approve button, per-customer tone profiles for drafts, and an
-outcomes loop - did the mitigation hold? - feeding a weekly ops report. Longer
-term: the review queue becomes training signal, so the confidence threshold adapts
-to each team's risk tolerance.
+The next step is to connect real carrier channels: EDI 214/315 feeds, email ingestion, and webhook events. From there, FreightDesk can add authenticated approval, real email delivery, customer-specific communication preferences, and feedback from review outcomes to improve routing over time.
+
+## Submission details
+
+- Repository: https://github.com/sechan9999/FreightDesk
+- Track: Work & Productivity
+- Demo: use the Savannah storm replay in the running Streamlit app

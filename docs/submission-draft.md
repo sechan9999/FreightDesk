@@ -1,54 +1,53 @@
-# Devpost submission draft
-
-> Fill the [BRACKETS] after the build. Form fields per the hackathon page.
+# Devpost submission: FreightDesk
 
 ## Project name
-FreightDesk — an AI exception desk for freight ops
 
-## Category / track
-Work and productivity
+FreightDesk
 
-## Elevator pitch (short)
-When a storm holds 40 containers, FreightDesk triages the flood, investigates the
-impact, and drafts every customer email — escalating only what a human must see.
+## Elevator pitch
+
+FreightDesk turns a flood of carrier updates into a prioritized freight exception queue, customer-ready drafts, and a focused human-review list.
 
 ## Project description
 
-**The problem.** Small freight brokers handle exception storms by hand. Every held
-container needs triage (how bad?), investigation (which delivery windows break?),
-and a customer email nobody has time to write. It's high-volume, formulaic-but-
-judgment-laden work — and missing one means OTIF penalties and churned customers.
+### The problem
 
-**What FreightDesk does.** Raw carrier messages (EDI feeds, emails, driver texts)
-go in. GPT-5.6 turns each into a structured exception via structured outputs. A
-tool-calling investigation agent — hard-capped at 5 steps — assesses blast radius:
-new ETA, missed windows, dollar value at risk. It then drafts the customer email
-and an internal action plan. High-confidence results wait for one-click approval;
-low-confidence ones route to a human review queue. Duplicate feed deliveries are
-suppressed by idempotency keys, so redelivered messages never double the work.
+During a port disruption, a small freight team can receive dozens of EDI updates, emails, and texts in minutes. Every update creates a decision: identify the shipment, estimate the customer impact, decide whether a response is needed, and write it. Duplicate deliveries and malformed carrier feeds make that work even harder.
 
-**Why the guardrails matter.** Most agent demos assume happy paths. Freight data
-is hostile: feeds redeliver, messages arrive malformed, and an agent that retries
-forever is an unbounded API bill. FreightDesk treats idempotency, bounded loops,
-and confidence-based human escalation as product features — visible in the UI.
+### The solution
 
-**How Codex accelerated the build.** [REQUIRED — real anecdotes: what Codex
-scaffolded, a design decision it drove, time saved. Reference the milestones in
-PRD.md. Example shape: "Codex built the FastAPI+SQLite core from the PRD in one
-session, proposed hashing normalized message text for the idempotency key, and
-wrote the pathological-input test that caught my loop-guard off-by-one."]
+FreightDesk is an exception desk for freight operations. It accepts carrier-style messages, classifies the exception, assesses impact, prioritizes the work, and prepares a customer communication plus an internal action plan.
 
-**How GPT-5.6 is used at runtime.** (1) structured-output triage of free-text
-carrier messages into typed exceptions; (2) the investigation agent's reasoning
-over function tools; (3) drafting customer comms and action plans.
+Operators work from three clear outcomes:
 
-**Prior art, disclosed.** The architecture pattern evolves my earlier public
-case study of async exception handling (github.com/sechan9999/IntelTrans). No code
-was reused; FreightDesk was built from scratch in Codex with a new product surface.
+- **Ready for approval** for high-confidence cases with a prepared response.
+- **Human review** for ambiguous, malformed, or low-confidence cases.
+- **Activity log** for a visible record of received, deduplicated, routed, and sent events.
 
-## Form fields checklist
-- [ ] Demo video URL (public YouTube, <3 min): [LINK]
-- [ ] Repo URL: https://github.com/sechan9999/FreightDesk (public, MIT)
-- [ ] Codex `/feedback` Session ID: [PASTE — from the main build session]
-- [ ] Track selection: Work and productivity
-- [ ] Team members: [solo / list]
+The Savannah storm replay demonstrates the complete workflow with 32 realistic messages, including three duplicate deliveries, malformed input, and a temperature-sensitive pharma shipment with a missed delivery window and $25,000 at risk.
+
+### What makes it reliable
+
+FreightDesk treats operational guardrails as product features. It suppresses duplicate messages through normalized-message idempotency, limits investigation to five steps, routes uncertainty to humans, and safely sends malformed data to review. The operator always has the final approval before a customer communication is marked sent.
+
+The demo engine is deterministic by default, so judges can replay the exact scenario without an API key or network-dependent output. A live OpenAI triage path is available only through explicit environment configuration.
+
+### How we built it
+
+We built FreightDesk as a tested Streamlit product with structured triage, bounded investigation, impact assessment, draft composition, and confidence routing. Codex accelerated the product build and hardening work, including the replay harness, regression tests, and persistent state that makes the live demo resilient to Streamlit reruns and browser refreshes.
+
+### What we learned
+
+Operational AI earns trust by making uncertainty visible. The useful outcome is not an agent that always acts; it is a system that handles the routine work quickly and reliably surfaces the decisions that still need a person.
+
+### What's next
+
+Next steps are real carrier integrations (EDI 214/315, email, and webhooks), authenticated approval, email delivery, customer-specific communication preferences, and feedback from review outcomes to improve routing over time.
+
+## Submission checklist
+
+- Repository: https://github.com/sechan9999/FreightDesk
+- Track: Work & Productivity
+- Demo video: add public URL
+- Team members: add names
+- Codex session/feedback reference: add the applicable session ID

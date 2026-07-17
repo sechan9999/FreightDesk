@@ -8,3 +8,4 @@ node_modules/
 .env
 *.db
 *.sqlite3
+.freightdesk_state.json

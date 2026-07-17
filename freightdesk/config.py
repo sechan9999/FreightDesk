@@ -6,15 +6,19 @@ from dataclasses import dataclass
 class Settings:
     max_rounds: int = 5
     confidence_threshold: float = 0.7
+    demo_mode: bool = True
     use_openai: bool = False          # experimental; stub engine is the default
     openai_model: str = "gpt-5.6"
 
 
 def settings_from_env() -> Settings:
+    demo_mode = os.getenv("FREIGHTDESK_DEMO_MODE", "1") != "0"
     return Settings(
         max_rounds=int(os.getenv("FREIGHTDESK_MAX_ROUNDS", "5")),
         confidence_threshold=float(os.getenv("FREIGHTDESK_CONFIDENCE_THRESHOLD", "0.7")),
-        use_openai=os.getenv("FREIGHTDESK_USE_OPENAI", "0") == "1"
+        demo_mode=demo_mode,
+        use_openai=not demo_mode
+        and os.getenv("FREIGHTDESK_USE_OPENAI", "0") == "1"
         and bool(os.getenv("OPENAI_API_KEY")),
         openai_model=os.getenv("FREIGHTDESK_MODEL", "gpt-5.6"),
     )
