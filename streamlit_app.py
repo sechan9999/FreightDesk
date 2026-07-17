@@ -31,7 +31,8 @@ SAMPLE_MESSAGES = {
 
 def get_desk() -> Desk:
     if "desk" not in st.session_state:
-        st.session_state.desk = Desk.load(STATE_PATH)
+        load_snapshot = getattr(Desk, "load", None)
+        st.session_state.desk = load_snapshot(STATE_PATH) if callable(load_snapshot) else Desk()
         st.session_state.replayed = bool(st.session_state.desk.exceptions)
     return st.session_state.desk
 
@@ -41,7 +42,9 @@ def load_seed() -> list[dict]:
 
 
 def persist_and_rerun() -> None:
-    desk.save(STATE_PATH)
+    save_snapshot = getattr(desk, "save", None)
+    if callable(save_snapshot):
+        save_snapshot(STATE_PATH)
     st.rerun()
 
 
