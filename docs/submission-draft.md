@@ -51,3 +51,17 @@ Next steps are real carrier integrations (EDI 214/315, email, and webhooks), aut
 - Demo video: add public URL
 - Team members: add names
 - Codex session/feedback reference: add the applicable session ID
+## Judge access and testing instructions
+
+**Paste this into Devpost's private judge-access field:**
+
+No credentials, API key, or account are required. Open the live app at https://freightdesk.streamlit.app/.
+
+1. Click **Reset desk** to start from a clean state.
+2. Click **Replay the Savannah storm (32 messages)**.
+3. Open the top red Inbox item, `TRK-40045-A`, to inspect its assessment, bounded agent trace, customer draft, and internal action plan.
+4. Click **Approve & send** to verify the human approval step.
+5. Open **Human review** to see ambiguous or malformed messages safely routed to an operator.
+6. Click **Replay again (all duplicates)** to verify that the duplicate counter rises without creating new work.
+
+The hosted demo uses a deterministic engine, so the same scenario runs without external service credentials. Source and local setup are available at https://github.com/sechan9999/FreightDesk.

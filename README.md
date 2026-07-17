@@ -1,82 +1,58 @@
-# FreightDesk 🚚📬
+# FreightDesk
 
-**An AI exception desk for freight operations.** Raw carrier status messages go in;
-triaged exceptions, impact assessments, drafted customer emails, and mitigation
-plans come out — with a human review queue for anything the agent isn't sure about.
+An AI exception desk for freight operations. FreightDesk turns raw carrier messages into a prioritized queue, impact assessments, customer-ready drafts, and a focused human-review list.
 
-Built for **[OpenAI Build Week](https://openai.devpost.com/)** · Track: **Work & Productivity**
-· Built with **Codex + GPT-5.6**
+Built for [OpenAI Build Week](https://openai.devpost.com/) in the Work & Productivity track.
 
-> **Repo status:** working Streamlit demo + tested engine (`freightdesk/`), running
-> on a **deterministic stub engine** standing in for GPT-5.6 (zero tokens, fully
-> reproducible). For the hackathon submission, the core is rebuilt/extended in a
-> Codex session per the rules — this implementation is the reference and demo fallback.
+## Try it
 
-## The problem
+Open the live demo: [freightdesk.streamlit.app](https://freightdesk.streamlit.app/)
 
-Small freight brokers and shippers handle exception storms by hand: a weather event
-hits a port and suddenly there are 40 emails about held containers, each needing
-triage ("how bad?"), investigation ("which orders miss their delivery windows?"),
-and a customer email nobody has time to write. It's high-volume, formulaic-but-
-judgment-laden work — exactly what an agent with guardrails should do.
+No credentials, API key, or account are required. The demo uses a deterministic engine so each judge can reproduce the same outcome.
 
-## How it works
+1. Click **Reset desk**.
+2. Click **Replay the Savannah storm (32 messages)**.
+3. Open the top red item, `TRK-40045-A`, to inspect the assessment, trace, draft, and action plan.
+4. Click **Approve & send** to complete the human-controlled workflow.
+5. Open **Human review** to see uncertain or malformed messages safely escalated.
+6. Click **Replay again (all duplicates)** to see repeat deliveries suppressed.
 
-```
-raw carrier msgs ──▶ GPT-5.6 triage ──▶ investigation agent ──▶ draft email + plan ──▶ inbox UI
- (paste / webhook)   (structured out)   (tools, max 5 steps)    (confidence-scored)   approve / edit
-                            │                                          │
-                            ▼                                          ▼
-                     duplicate suppression                    low confidence → human
-                     (idempotency key)                        review queue
-```
+## Why it matters
 
-Production guardrails are first-class: idempotent ingestion (carrier feeds redeliver),
-a bounded agent loop (no runaway token bills), and confidence-based human escalation.
+Freight operations fail under exception volume, not a lack of notifications. One port disruption can produce dozens of EDI updates, emails, texts, and redeliveries. FreightDesk makes the first pass visible and reviewable:
 
-## Quickstart
+- High-confidence cases are prepared for operator approval.
+- Ambiguous or malformed messages route to human review.
+- Duplicate messages are counted and suppressed.
+- Investigation is capped at five steps.
+- Customer communication remains editable and human-approved.
+
+The included Savannah storm scenario has 32 messages: 29 unique inputs, three duplicate deliveries, and a temperature-sensitive pharma shipment with a missed delivery window and $25,000 at risk.
+
+## Run locally
 
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-Click **"Replay the Savannah storm (32 messages)"** — then open the 🔴 pharma
-exception at the top of the inbox, inspect the agent trace, edit the drafted
-customer email, and approve it. Try **"Replay again"** to watch idempotency drop
-all 32 as duplicates.
-
-Optional live-LLM triage: `FREIGHTDESK_USE_OPENAI=1` + `OPENAI_API_KEY`
-(+ `pip install openai`); the stub remains the fallback on any API failure.
-
-Run the tests:
+Run the test suite:
 
 ```bash
-pytest        # 10 tests: triage, tiering, idempotency, bounded agent, full seed replay
+python -m pytest
 ```
 
-## Sample data
+## What's next
 
-[`data/seed_messages.jsonl`](data/seed_messages.jsonl) — 30 realistic carrier
-status messages (EDI-style, email-style, SMS-style; includes duplicates and one
-malformed message) for demos and judge testing. Spec: [`data/SEED_SPEC.md`](data/SEED_SPEC.md).
+The next step is to connect real carrier channels: EDI 214/315 feeds, email ingestion, and webhook events. From there, FreightDesk can add authenticated approval, real email delivery, customer-specific communication preferences, and feedback from review outcomes to improve routing over time.
 
-## How Codex and GPT-5.6 were used
+## Project links
 
-_TBD after the build — this section will document, with session references:_
-- what Codex scaffolded vs what was hand-edited
-- key design decisions made inside the Codex session
-- where GPT-5.6 runs at runtime (triage structured outputs, investigation
-  reasoning, comms drafting)
-
-## Docs
-
-- [PRD.md](PRD.md) — product requirements: user stories, scope, demo flow
-- [SPEC.md](SPEC.md) — technical spec: components, validated schema, API contracts, agent interfaces
-- [BUILD_CHECKLIST.md](BUILD_CHECKLIST.md) — milestone-by-milestone execution checklist with verification gates
-- [docs/video-script.md](docs/video-script.md) — demo video script + shot list
-- [docs/submission-draft.md](docs/submission-draft.md) — Devpost submission text
+- Live app: https://freightdesk.streamlit.app/
+- Repository: https://github.com/sechan9999/FreightDesk
+- Devpost write-up: [docs/submission-draft.md](docs/submission-draft.md)
+- Live demo script: [docs/video-script.md](docs/video-script.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
