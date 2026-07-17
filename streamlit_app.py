@@ -4,7 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from freightdesk.config import Settings, settings_from_env
+from freightdesk.config import Settings
 from freightdesk.pipeline import process_message
 from freightdesk.store import Desk
 
@@ -48,7 +48,7 @@ def persist_and_rerun() -> None:
     st.rerun()
 
 
-env_settings = settings_from_env()
+
 desk = get_desk()
 
 with st.sidebar:
@@ -61,12 +61,7 @@ with st.sidebar:
     sample_key = st.selectbox("Sample", list(SAMPLE_MESSAGES.keys()))
     custom = st.text_area("Or paste a raw carrier message", height=90, placeholder="STATUS: CNTR ... / any email or SMS text")
 
-    settings = Settings(
-        confidence_threshold=threshold,
-        demo_mode=env_settings.demo_mode,
-        use_openai=env_settings.use_openai,
-        openai_model=env_settings.openai_model,
-    )
+    settings = Settings(confidence_threshold=threshold)
     if st.button("Inject message", use_container_width=True):
         raw = custom.strip() or SAMPLE_MESSAGES[sample_key]
         process_message(raw, "email" if custom.strip() else "edi", desk, settings)
