@@ -4,6 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from freightdesk.cascade import build_cascades, format_cascade, impact_chain
 from freightdesk.config import Settings
 from freightdesk.pipeline import process_message
 from freightdesk.store import Desk
@@ -119,8 +120,10 @@ if st.session_state.get("replayed"):
 open_records = desk.sorted_open()
 review_records = desk.by_status("needs_human_review")
 inbox_records = [record for record in open_records if record.status != "needs_human_review"]
-tab_inbox, tab_review, tab_log = st.tabs([
+cascades = build_cascades(open_records) if open_records else []
+tab_inbox, tab_map, tab_review, tab_log = st.tabs([
     f"Inbox ({len(inbox_records)})",
+    f"Disruption map ({len(cascades)})",
     f"Human review ({len(review_records)})",
     "Activity log",
 ])
@@ -144,6 +147,8 @@ def render_exception(record, namespace: str) -> None:
                     f"**Window missed:** {'yes' if assessment.window_missed else 'no'} | "
                     f"**At risk:** ${assessment.affected_value:,.0f}"
                 )
+                st.markdown("**Impact chain**")
+                st.code(impact_chain(record), language="text")
             if draft:
                 st.text_input("Email subject", draft.email_subject, key=f"{namespace}-subj-{record.id}")
                 st.text_area("Customer email draft (editable)", draft.email_body,
@@ -182,6 +187,23 @@ with tab_inbox:
         st.info("Inbox is clear. Replay the Savannah storm or inject a message from the sidebar.")
     for record in inbox_records:
         render_exception(record, namespace="inbox")
+
+with tab_map:
+    if not cascades:
+        st.info("No open exceptions to map. Replay the storm to see disruptions cascade.")
+    else:
+        st.caption(
+            "One disruption is never one message. Each card groups the open exceptions "
+            "that share a disruption source and traces how the impact propagates: "
+            "disruption -> shipments -> delivery windows -> revenue at risk -> mitigation."
+        )
+        for cascade in cascades:
+            tier_label = TIER_BADGE[cascade["worst_tier"]]
+            st.markdown(
+                f"**{tier_label} | {cascade['location']}** - {cascade['count']} exceptions, "
+                f"${cascade['value_at_risk']:,.0f} at risk"
+            )
+            st.code(format_cascade(cascade), language="text")
 
 with tab_review:
     if not review_records:
