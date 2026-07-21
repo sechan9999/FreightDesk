@@ -6,9 +6,11 @@ This script is designed for a 9-minute presentation with roughly one minute of r
 
 1. Open `http://localhost:8501`.
 2. Keep browser zoom at 100% and the window wide enough to show the six metric tiles.
-3. Click **Reset desk** once. Confirm the Inbox and Human review tabs both show `0`.
-4. Keep the app on the main page. Do not pre-run the replay.
-5. Have the repository open in a second tab only as a backup; the live app is the main proof.
+3. In the sidebar, sign in as an operator (your name + PIN `2468`) and confirm the
+   "Signed in as ... - approvals enabled" caption. Without this, Approve & send is disabled.
+4. Click **Reset desk** once. Confirm the Inbox and Human review tabs both show `0`.
+5. Keep the app on the main page. Do not pre-run the replay.
+6. Have the repository open in a second tab only as a backup; the live app is the main proof.
 
 ## 0:00-0:45 | Problem and promise
 

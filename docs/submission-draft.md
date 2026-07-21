@@ -42,7 +42,7 @@ Operational AI earns trust by making uncertainty visible. The useful outcome is 
 
 ### What's next
 
-Next steps are real carrier integrations (EDI 214/315, email, and webhooks), authenticated approval, email delivery, customer-specific communication preferences, and feedback from review outcomes to improve routing over time.
+Authenticated approval, delivery, customer communication preferences, batch feed ingestion, and outcome-driven adaptive routing already shipped. Next: real carrier network connections (EDI VAN integrations, inbound webhook endpoints), SSO-backed operator identity, and analytics on whether chosen mitigations held.
 
 ## Submission checklist
 
@@ -55,13 +55,15 @@ Next steps are real carrier integrations (EDI 214/315, email, and webhooks), aut
 
 **Paste this into Devpost's private judge-access field:**
 
-No credentials, API key, or account are required. Open the live app at https://freightdesk.streamlit.app/.
+No account or API key is required. Open the live app at https://freightdesk.streamlit.app/.
 
-1. Click **Reset desk** to start from a clean state.
-2. Click **Replay the Savannah storm (32 messages)**.
-3. Open the top red Inbox item, `TRK-40045-A`, to inspect its assessment, bounded agent trace, customer draft, and internal action plan.
-4. Click **Approve & send** to verify the human approval step.
-5. Open **Human review** to see ambiguous or malformed messages safely routed to an operator.
-6. Click **Replay again (all duplicates)** to verify that the duplicate counter rises without creating new work.
+1. In the sidebar, sign in as an operator: any name + demo PIN `2468`. Approvals are authenticated, so **Approve & send stays disabled until this step**.
+2. Click **Reset desk** to start from a clean state.
+3. Click **Replay the Savannah storm (32 messages)**.
+4. Open the top red Inbox item, `TRK-40045-A`, to inspect its assessment, bounded agent trace, impact chain, and the customer draft addressed to the account on file.
+5. Click **Approve & send** - the activity log records the approving operator and the delivery mode (mocked here; real SMTP when configured).
+6. Open **Disruption map** to see exceptions grouped by disruption source with value at risk per cascade.
+7. Open **Human review** to see ambiguous or malformed messages safely routed to an operator.
+8. Click **Replay again (all duplicates)** to verify that the duplicate counter rises without creating new work.
 
 The hosted demo uses a deterministic engine, so the same scenario runs without external service credentials. Source and local setup are available at https://github.com/sechan9999/FreightDesk.
