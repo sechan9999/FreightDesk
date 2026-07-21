@@ -3,8 +3,8 @@ import hashlib
 # Known shipments referenced by the seed data. Unknown refs get a deterministic
 # synthetic record so demos and tests are reproducible.
 MOCK_SHIPMENTS = {
-    "TRK-40021-A": {"carrier": "BlueOcean", "lane": "SAV->ATL", "slack_hours": 30, "order_value_usd": 18000, "commodity": "apparel", "temperature_controlled": False},
-    "TRK-40022-B": {"carrier": "BlueOcean", "lane": "SAV->CLT", "slack_hours": 10, "order_value_usd": 22000, "commodity": "furniture", "temperature_controlled": False},
+    "TRK-40021-A": {"carrier": "BlueOcean", "lane": "SAV->ATL", "slack_hours": 30, "order_value_usd": 18000, "commodity": "apparel", "temperature_controlled": False, "customer": "ATLRETAIL"},
+    "TRK-40022-B": {"carrier": "BlueOcean", "lane": "SAV->CLT", "slack_hours": 10, "order_value_usd": 22000, "commodity": "furniture", "temperature_controlled": False, "customer": "ATLRETAIL"},
     "TRK-40023-C": {"carrier": "BlueOcean", "lane": "SAV->ATL", "slack_hours": 44, "order_value_usd": 9000, "commodity": "toys", "temperature_controlled": False},
     "TRK-40026-C": {"carrier": "EverLine", "lane": "SIN->LAX", "slack_hours": 96, "order_value_usd": 54000, "commodity": "electronics", "temperature_controlled": False},
     "TRK-40027-A": {"carrier": "PacRim", "lane": "LGB->PHX", "slack_hours": 20, "order_value_usd": 31000, "commodity": "appliances", "temperature_controlled": False},
@@ -12,7 +12,7 @@ MOCK_SHIPMENTS = {
     "TRK-40030-A": {"carrier": "Maersk", "lane": "SAV->RTM", "slack_hours": 120, "order_value_usd": 15000, "commodity": "machinery", "temperature_controlled": False},
     "TRK-40036-A": {"carrier": "CMA", "lane": "RTM->DUS", "slack_hours": 60, "order_value_usd": 27000, "commodity": "chemicals", "temperature_controlled": False},
     "TRK-40038-C": {"carrier": "ColdChain", "lane": "MEM->DFW", "slack_hours": 5, "order_value_usd": 38000, "commodity": "dairy", "temperature_controlled": True},
-    "TRK-40045-A": {"carrier": "ColdChain", "lane": "SAV->RDU", "slack_hours": 4, "order_value_usd": 25000, "commodity": "pharmaceuticals", "temperature_controlled": True},
+    "TRK-40045-A": {"carrier": "ColdChain", "lane": "SAV->RDU", "slack_hours": 4, "order_value_usd": 25000, "commodity": "pharmaceuticals", "temperature_controlled": True, "customer": "NOVAPHARM"},
 }
 
 PORT_CONDITIONS = {

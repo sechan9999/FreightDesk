@@ -5,9 +5,14 @@ from pathlib import Path
 import streamlit as st
 
 from freightdesk.cascade import build_cascades, format_cascade, impact_chain
+from freightdesk.channels import parse_batch
 from freightdesk.config import Settings
+from freightdesk.delivery import deliver, smtp_config
+from freightdesk.feedback import effective_threshold, record_demotion, record_promotion
 from freightdesk.pipeline import process_message
 from freightdesk.store import Desk
+
+APPROVAL_PIN = os.getenv("FREIGHTDESK_APPROVAL_PIN", "2468")
 
 st.set_page_config(page_title="FreightDesk - AI Exception Desk", page_icon="FD", layout="wide")
 
@@ -53,11 +58,38 @@ def persist_and_rerun() -> None:
 desk = get_desk()
 
 with st.sidebar:
+    st.header("Operator")
+    operator = st.text_input("Name", key="op-name", placeholder="e.g. J. Park")
+    pin = st.text_input("Approval PIN", key="op-pin", type="password",
+                        help="Approvals are authenticated: set FREIGHTDESK_APPROVAL_PIN (demo default: 2468).")
+    authed = bool(operator.strip()) and pin == APPROVAL_PIN
+    if authed:
+        st.caption(f"Signed in as **{operator.strip()}** - approvals enabled.")
+    else:
+        st.caption("Enter name + PIN to enable Approve & send (demo PIN: 2468).")
+
     st.header("Desk settings")
     threshold = st.slider(
         "Confidence threshold for auto-queue", 0.50, 0.90, 0.70, 0.05,
         help="Drafts at or above this confidence go to the approval inbox; below it, a human reviews first.",
     )
+    if desk.feedback:
+        st.caption("**Adaptive routing** (learned from review outcomes):")
+        for exc_type, entry in sorted(desk.feedback.items()):
+            st.caption(
+                f"- {exc_type}: threshold {effective_threshold(desk, exc_type, threshold):.2f} "
+                f"({entry['promotions']} promoted, {entry['demotions']} demoted)"
+            )
+
+    st.header("Ingest a carrier feed drop")
+    feed_file = st.file_uploader("EDI-style / JSONL batch (.txt, .jsonl)", type=["txt", "jsonl"])
+    if st.button("Ingest feed drop", use_container_width=True, disabled=feed_file is None):
+        batch = parse_batch(feed_file.getvalue().decode("utf-8", errors="replace"))
+        for channel, raw in batch:
+            process_message(raw, channel, desk, Settings(confidence_threshold=threshold))
+        desk.log("info", "feed_drop_ingested", messages=len(batch), source=feed_file.name)
+        persist_and_rerun()
+
     st.header("Inject a single message")
     sample_key = st.selectbox("Sample", list(SAMPLE_MESSAGES.keys()))
     custom = st.text_area("Or paste a raw carrier message", height=90, placeholder="STATUS: CNTR ... / any email or SMS text")
@@ -150,6 +182,8 @@ def render_exception(record, namespace: str) -> None:
                 st.markdown("**Impact chain**")
                 st.code(impact_chain(record), language="text")
             if draft:
+                recipient = draft.email_to or "no address on file (send will be recorded, not delivered)"
+                st.caption(f"To: {recipient}")
                 st.text_input("Email subject", draft.email_subject, key=f"{namespace}-subj-{record.id}")
                 st.text_area("Customer email draft (editable)", draft.email_body,
                              height=200, key=f"{namespace}-body-{record.id}")
@@ -164,17 +198,28 @@ def render_exception(record, namespace: str) -> None:
 
         if record.status in ("ready_for_approval", "needs_human_review"):
             col_a, col_b, col_c = st.columns(3)
-            if col_a.button("Approve & send", key=f"{namespace}-approve-{record.id}", use_container_width=True):
+            if col_a.button("Approve & send", key=f"{namespace}-approve-{record.id}",
+                            use_container_width=True, disabled=not authed,
+                            help=None if authed else "Enter operator name + PIN in the sidebar to approve."):
+                was_in_review = record.status == "needs_human_review"
+                mode, detail = "mock", "no draft to deliver"
                 if draft:
                     draft.email_subject = st.session_state.get(f"{namespace}-subj-{record.id}", draft.email_subject)
                     draft.email_body = st.session_state.get(f"{namespace}-body-{record.id}", draft.email_body)
+                    draft.approved_by = operator.strip()
+                    mode, detail = deliver(draft)
                 desk.set_status(record.id, "sent")
-                desk.log("info", "customer_email_sent", id=record.id, ref=triage.shipment_ref or "-")
+                if was_in_review:
+                    record_promotion(desk, triage.exception_type)  # AI was too cautious here
+                desk.log("info", "customer_email_sent", id=record.id,
+                         ref=triage.shipment_ref or "-", by=operator.strip(),
+                         delivery=mode, detail=detail)
                 persist_and_rerun()
             if record.status == "ready_for_approval":
                 if col_b.button("Send to review", key=f"{namespace}-review-{record.id}", use_container_width=True):
                     desk.set_status(record.id, "needs_human_review")
-                    desk.log("warning", "sent_to_review", id=record.id, by="operator")
+                    record_demotion(desk, triage.exception_type)  # AI was overconfident here
+                    desk.log("warning", "sent_to_review", id=record.id, by=operator.strip() or "operator")
                     persist_and_rerun()
             if col_c.button("Dismiss", key=f"{namespace}-dismiss-{record.id}", use_container_width=True):
                 desk.set_status(record.id, "dismissed")
@@ -220,11 +265,10 @@ with tab_log:
         st.info("No activity yet.")
 
 st.divider()
-st.subheader("What's next")
-st.write(
-    "The next step is to connect real carrier channels: EDI 214/315 feeds, email "
-    "ingestion, and webhook events. From there, FreightDesk can add authenticated "
-    "approval, real email delivery, customer-specific communication preferences, and "
-    "feedback from review outcomes to improve routing over time."
+delivery_state = "SMTP configured - approvals deliver real email" if smtp_config() \
+    else "SMTP not configured - approvals are recorded, delivery is mocked"
+st.caption(
+    f"Channels: feed drop + manual inject | Approval: operator + PIN | "
+    f"Delivery: {delivery_state} | Routing: adaptive per exception type | "
+    f"[Repo](https://github.com/sechan9999/FreightDesk)"
 )
-st.markdown("[freightdesk.streamlit.app](https://freightdesk.streamlit.app/)")

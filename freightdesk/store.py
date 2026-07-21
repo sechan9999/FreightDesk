@@ -26,6 +26,7 @@ class Desk:
         self.exceptions: dict[int, ExceptionRecord] = {}
         self.logs: list[str] = []
         self.counters = {"ingested": 0, "duplicates": 0, "sent": 0, "dismissed": 0}
+        self.feedback: dict[str, dict] = {}  # per-type adaptive routing state
         self._next_msg = 0
         self._next_exc = 0
 
@@ -105,6 +106,7 @@ class Desk:
             desk.counters = dict(snapshot["counters"])
             desk._next_msg = int(snapshot["next_msg"])
             desk._next_exc = int(snapshot["next_exc"])
+            desk.feedback = dict(snapshot.get("feedback", {}))  # absent in older snapshots
             for serialized in snapshot["exceptions"]:
                 serialized["triage"] = TriageResult(**serialized["triage"])
                 if serialized["assessment"]:
@@ -126,6 +128,7 @@ class Desk:
             "counters": self.counters,
             "next_msg": self._next_msg,
             "next_exc": self._next_exc,
+            "feedback": self.feedback,
         }
         snapshot_path.write_text(
             json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8"

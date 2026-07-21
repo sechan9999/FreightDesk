@@ -41,6 +41,8 @@ class Draft:
     email_subject: str
     email_body: str
     action_plan: str
+    email_to: str = ""       # from the customer profile; empty = no address on file
+    approved_by: str = ""    # operator who approved the send (audit trail)
 
 
 @dataclass

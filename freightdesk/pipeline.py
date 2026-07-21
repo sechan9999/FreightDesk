@@ -3,6 +3,8 @@ from typing import Optional
 from .agent import investigate
 from .composer import compose
 from .config import Settings
+from .customers import profile_for
+from .feedback import effective_threshold
 from .models import ExceptionRecord
 from .store import Desk
 from .tiering import tier
@@ -43,15 +45,16 @@ def process_message(raw: str, channel: str, desk: Desk,
         rec.tier = tier(t.severity, assessment.window_missed, assessment.affected_value)
 
         desk.set_status(rec.id, "drafting")
-        desk.save_draft(rec.id, compose(t, assessment))
+        desk.save_draft(rec.id, compose(t, assessment, profile_for(t.shipment_ref)))
 
-        if assessment.confidence >= settings.confidence_threshold:
+        threshold = effective_threshold(desk, t.exception_type, settings.confidence_threshold)
+        if assessment.confidence >= threshold:
             desk.set_status(rec.id, "ready_for_approval")
             desk.log("info", "draft_ready", id=rec.id, tier=rec.tier)
         else:
             desk.set_status(rec.id, "needs_human_review")
             desk.log("warning", "routed_to_review", id=rec.id,
-                     reason=f"confidence {assessment.confidence:.2f} < {settings.confidence_threshold}")
+                     reason=f"confidence {assessment.confidence:.2f} < {threshold} (adaptive)")
         return rec
 
     except Exception as e:  # pipeline boundary: never kill the desk
